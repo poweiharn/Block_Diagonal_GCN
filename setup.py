@@ -1,7 +1,7 @@
 from setuptools import setup
 from setuptools import find_packages
 
-setup(name='Block_Diagonal_GCN',
+setup(name='block_diagonal_gcn',
       version='0.1',
       description='Block Diagonal Graph Convolutional Network in PyTorch',
       author='Po-wei Harn, Sai Deepthi',
@@ -11,7 +11,10 @@ setup(name='Block_Diagonal_GCN',
       license='MIT',
       install_requires=['numpy',
                         'torch',
-                        'scipy'
+                        'scipy',
+                        'matplotlib',
+                        'sklearn',
+                        'mlxtend'
                         ],
       package_data={'block_diagonal_gcn': ['README.md']},
       packages=find_packages())

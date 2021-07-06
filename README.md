@@ -5,9 +5,8 @@
 ```python setup.py install```
 
 ## Requirements
-
-  * PyTorch 0.4 or 0.5
-  * Python 2.7 or 3.6
+  * Conda environment
+  * Python 3.7
 
 ## Usage
 
