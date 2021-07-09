@@ -55,7 +55,11 @@ class GraphConvolution(Module):
                 # Construct the Block diagonal weight matrix
                 W = torch.block_diag(W,W_1)
         # Set it as torch nn parameter for back propagation
-        W = Parameter(W)
+        if self.mode is "iterative_multiplication":
+            # Remove zero from block weights to save space
+            W = Parameter(W[W.nonzero(as_tuple=True)])
+        else:
+            W = Parameter(W)
         return W
 
 
@@ -91,9 +95,9 @@ class GraphConvolution(Module):
                 support = torch.mm(X, self.block_weight)
                 output = torch.spmm(adj, support)
             elif self.mode is "iterative_multiplication":
-                # Slice the block_weight matrix into len(self.partitions) weights,
-                # each weight has (self.in_features x self.out_features)
-                weights = self.block_weight[self.block_weight.nonzero(as_tuple=True)].view(len(self.partitions), self.in_features, -1)
+                # Slice the non-zero block_weight matrix into len(self.partitions) weights,
+                # each weight matrix has (self.in_features x self.out_features)
+                weights = self.block_weight.view(len(self.partitions), self.in_features, -1)
                 # Matrix multiplication iteratively to save space from block features
                 S = torch.mm(input[self.partitions[0]], weights[0])
                 for i in range(len(self.partitions)):
