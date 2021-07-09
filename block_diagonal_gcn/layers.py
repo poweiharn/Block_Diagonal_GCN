@@ -53,11 +53,16 @@ class GraphConvolution(Module):
                 stdv = 1. / math.sqrt(W_1.size(1))
                 W_1.data.uniform_(-stdv, stdv)
                 # Construct the Block diagonal weight matrix
-                W = torch.block_diag(W,W_1)
+                if self.mode is "iterative_multiplication":
+                    # Use concat instead of block_diag
+                    W = torch.cat((W, W_1))
+                else:
+                    W = torch.block_diag(W,W_1)
+
         # Set it as torch nn parameter for back propagation
         if self.mode is "iterative_multiplication":
-            # Remove zero from block weights to save space
-            W = Parameter(W[W.nonzero(as_tuple=True)])
+            # Remove all zeros from block weights to save space
+            W = Parameter(W.reshape((-1,)))
         else:
             W = Parameter(W)
         return W
