@@ -11,7 +11,7 @@ class GraphConvolution(Module):
     Simple GCN layer, similar to https://arxiv.org/abs/1609.02907
     """
 
-    def __init__(self, in_features, out_features, partitions, is_block_layer, is_first_layer):
+    def __init__(self, in_features, out_features, partitions, layer_type, mode):
         super(GraphConvolution, self).__init__()
         # Input dimension
         self.in_features = in_features
@@ -19,18 +19,22 @@ class GraphConvolution(Module):
         self.out_features = out_features
         # The list of partition indexes, Example: Three partitions [[0,3,7],[1,6,8],[2,4,7,9]]
         self.partitions = partitions
-        # Is this the first block diagonal layer
-        self.is_first_layer = is_first_layer
-        # Is this layer a block diagonal layer
-        self.is_block_layer = is_block_layer
 
-        if not is_block_layer:
+        # "BD_layer_1": First block diagonal layer
+        # "Fully_connect": Fully connected layer
+        self.layer_type = layer_type
+
+        # Made for BD_layer_1
+        # Mode 1: "block_multiplication" for block features
+        # Mode 2: "iterative_multiplication" features to save space
+        self.mode = mode
+
+        if self.layer_type is "Fully_connect":
             # Fully connected layer, set the weight matrix to (in_features x out_features)
             self.weight = Parameter(torch.FloatTensor(in_features, out_features))
             # Initialize the weight
             self.reset_parameters()
         else:
-            # Block diagonal weight matrix
             self.block_weight = self.initialize_weight()
 
 
@@ -62,7 +66,7 @@ class GraphConvolution(Module):
             #self.bias.data.uniform_(-stdv, stdv)
 
     def forward(self, input, adj):
-        if not self.is_block_layer:
+        if self.layer_type is "Fully_connect":
             # Fully connected layer
             #print(input.shape) # 10 x 3
             #print(self.weight.shape) # 3 x 16
@@ -71,9 +75,9 @@ class GraphConvolution(Module):
             #print(adj.shape) # 10 x 10
             output = torch.spmm(adj, support)
             #print(output.shape) # 10 x 16
-        else:
+        elif self.layer_type is "BD_layer_1":
             # Block diagonal layer
-            if self.is_first_layer:
+            if self.mode is "block_multiplication":
                 # If this Block diagonal layer is the first layer
                 # Initialize the hidden block features with respect to the partition indices
                 X = input[self.partitions[0]]
@@ -86,10 +90,21 @@ class GraphConvolution(Module):
                 # Matrix Multiplication
                 support = torch.mm(X, self.block_weight)
                 output = torch.spmm(adj, support)
-            else:
-                # The second Block diagonal layer
-                support = torch.mm(input, self.block_weight)
-                output = torch.spmm(adj, support)
+            elif self.mode is "iterative_multiplication":
+                # Slice the block_weight matrix into len(self.partitions) weights,
+                # each weight has (self.in_features x self.out_features)
+                weights = self.block_weight[self.block_weight.nonzero(as_tuple=True)].view(len(self.partitions), self.in_features, -1)
+                # Matrix multiplication iteratively to save space from block features
+                S = torch.mm(input[self.partitions[0]], weights[0])
+                for i in range(len(self.partitions)):
+                    if i is not 0:
+                        S = torch.block_diag(S,torch.mm(input[self.partitions[i]], weights[i]))
+                output = torch.spmm(adj, S)
+
+        else:
+            # The second Block diagonal layer
+            support = torch.mm(input, self.block_weight)
+            output = torch.spmm(adj, support)
 
         return output
 

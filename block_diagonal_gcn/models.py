@@ -11,18 +11,18 @@ class GCN_B_D(nn.Module):
         self.layer2_hidden = 16
 
         # Block diagonal layer 1
-        self.gc1 = GraphConvolution(nfeatures, self.layer1_hidden, partitions, True, True)
+        self.gc1 = GraphConvolution(nfeatures, self.layer1_hidden, partitions, "BD_layer_1", "block_multiplication")
         # Block diagonal layer 2
-        self.gc2 = GraphConvolution(self.layer1_hidden, self.layer2_hidden, partitions, True, False)
+        self.gc2 = GraphConvolution(self.layer1_hidden, self.layer2_hidden, partitions, "BD_layer_2", "block_multiplication")
         # Fully connected layer
-        self.gc3 = GraphConvolution(self.layer2_hidden*self.partition_num, nclass, partitions, False, False)
+        self.gc3 = GraphConvolution(self.layer2_hidden*self.partition_num, nclass, partitions, "Fully_connect", False)
         self.dropout = dropout
 
     def forward(self, x, adj):
         #print("--------gc1-----------")
         x = F.relu(self.gc1(x, adj))
         x = F.dropout(x, self.dropout, training=self.training)
-        # print(self.gc1.block_weight)
+        #print(self.gc1.block_weight)
 
         #print("--------gc2-----------")
         x = F.relu(self.gc2(x, adj))
