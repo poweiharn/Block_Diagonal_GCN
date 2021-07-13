@@ -7,7 +7,7 @@ from sklearn.metrics import confusion_matrix
 from mlxtend.plotting import plot_confusion_matrix
 
 from sklearn.manifold import TSNE
-from block_diagonal_gcn.clique_partition import partition 
+from block_diagonal_gcn.partition import clique_partition, general_partition 
 
 
 def encode_onehot(labels):
@@ -64,7 +64,11 @@ def load_data(path="../data/test/", dataset="test"):
     adj3 = get_adjacency_matrix(edges, idx3)
     print(adj3.toarray())'''
     
-    adj1, adj2, adj3, idx1, idx2, idx3 = partition(edges)
+    partition_type='clique partition'
+    if(partition_type=='clique partition'):
+      adj1, adj2, adj3, idx1, idx2, idx3 = clique_partition(edges)
+    else:
+      adj1, adj2, adj3, idx1, idx2, idx3 = general_partition(edges)
     print('indices list:')
     print('idx1', idx1)
     print('idx2', idx2)
