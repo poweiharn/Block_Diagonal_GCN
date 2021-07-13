@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import math
+import matplotlib.pyplot as plt 
 
 def clique_partition(edges):
 
@@ -143,21 +144,21 @@ def clique_partition(edges):
           cliquescount = cliquescount + 1
 
 
-        '''plt.figure(figsize =(9, 12))
+        plt.figure(figsize =(9, 12))
         plt.subplot(111)
-        nx.draw_networkx(H)'''
+        nx.draw_networkx(H)
         
         #plt.savefig(f'partition {str(int(count+1))}', dpi = fig.dpi)
         if(cliquescount==1):
           A_1 = nx.adjacency_matrix(H)
-          idx_1 = subgraph_list.copy()
+          idx_1 = sorted(subgraph_list.copy())
           #print('A1', A_1.todense())
         elif(cliquescount==2):
           A_2 = nx.adjacency_matrix(H)
-          idx_2 = subgraph_list.copy()
+          idx_2 = sorted(subgraph_list.copy())
         elif(cliquescount==3):
           A_3 = nx.adjacency_matrix(H)
-          idx_3 = subgraph_list.copy()
+          idx_3 = sorted(subgraph_list.copy())
         #print('\nadj matrix of partition ' + str(int(count+1)) + '\n', A.todense())
         count = count + 1
         G.remove_nodes_from([n for n in G if n in set(subgraph_list)]) 
@@ -298,22 +299,23 @@ def general_partition(edges):
           cliquescount = cliquescount + 1
         else:
           nocliquescount = nocliquescount + 1
+        
 
-        '''plt.figure(figsize =(9, 12))
+        plt.figure(figsize =(9, 12))
         plt.subplot(111)
-        nx.draw_networkx(H)'''
+        nx.draw_networkx(H)
         
         #plt.savefig(f'partition {str(int(count+1))}', dpi = fig.dpi)
         if(count==0):
           A_1 = nx.adjacency_matrix(H)
-          idx_1 = subgraph_list.copy()
+          idx_1 = sorted(subgraph_list.copy())
           #print('A1', A_1.todense())
         elif(count==1):
           A_2 = nx.adjacency_matrix(H)
-          idx_2 = subgraph_list.copy()
+          idx_2 = sorted(subgraph_list.copy())
         elif(count==2):
           A_3 = nx.adjacency_matrix(H)
-          idx_3 = subgraph_list.copy()
+          idx_3 = sorted(subgraph_list.copy())
         #print('\nadj matrix of partition ' + str(int(count+1)) + '\n', A.todense())
         count = count + 1
         G.remove_nodes_from([n for n in G if n in set(subgraph_list)]) 
