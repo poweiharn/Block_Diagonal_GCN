@@ -7,6 +7,7 @@ from sklearn.metrics import confusion_matrix
 from mlxtend.plotting import plot_confusion_matrix
 
 from sklearn.manifold import TSNE
+from block_diagonal_gcn.clique_partition import partition 
 
 
 def encode_onehot(labels):
@@ -51,7 +52,7 @@ def load_data(path="../data/test/", dataset="test"):
     edges = np.array(list(map(idx_map.get, edges_unordered.flatten())),
                      dtype=np.int32).reshape(edges_unordered.shape)
 
-    idx1 = [0, 3, 7]
+    '''idx1 = [0, 3, 7]
     adj1 = get_adjacency_matrix(edges, idx1)
     print(adj1.toarray())
 
@@ -61,8 +62,31 @@ def load_data(path="../data/test/", dataset="test"):
 
     idx3 = [2, 4, 5, 9]
     adj3 = get_adjacency_matrix(edges, idx3)
-    print(adj3.toarray())
+    print(adj3.toarray())'''
+    
+    adj1, adj2, adj3, idx1, idx2, idx3 = partition(edges)
+    print('indices list:')
+    print('idx1', idx1)
+    print('idx2', idx2)
+    print('idx3', idx3)
+    print('before normalization:', adj1.toarray())
+    adj1 = sp.coo_matrix(adj1, dtype=np.float32)
+    adj1 = adj1 + adj1.T.multiply(adj1.T > adj1) - adj1.multiply(adj1.T > adj1)
+    adj1 = normalize_adj(adj1 + sp.eye(adj1.shape[0]))
+    print('after normalization:', adj1.toarray())
 
+    print('before normalization:', adj2.toarray())
+    adj2 = sp.coo_matrix(adj2, dtype=np.float32)
+    adj2 = adj2 + adj2.T.multiply(adj2.T > adj2) - adj2.multiply(adj2.T > adj2)
+    adj2 = normalize_adj(adj2 + sp.eye(adj2.shape[0]))
+    print('after normalization:', adj2.toarray())
+
+    print('before normalization:', adj3.toarray())
+    adj3 = sp.coo_matrix(adj3, dtype=np.float32)
+    adj3 = adj3 + adj3.T.multiply(adj3.T > adj3) - adj3.multiply(adj3.T > adj3)
+    adj3 = normalize_adj(adj3 + sp.eye(adj3.shape[0]))
+    print('after normalization:', adj3.toarray())
+    
     adj_block = sp.block_diag([adj1, adj2, adj3])
 
     partitions = []
