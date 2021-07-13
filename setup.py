@@ -14,7 +14,8 @@ setup(name='block_diagonal_gcn',
                         'scipy',
                         'matplotlib',
                         'sklearn',
-                        'mlxtend'
+                        'mlxtend',
+                        'networkx'
                         ],
       package_data={'block_diagonal_gcn': ['README.md']},
       packages=find_packages())
