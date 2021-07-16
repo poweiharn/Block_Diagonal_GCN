@@ -6,11 +6,13 @@ import argparse
 import numpy as np
 
 import torch
+import torch.nn.utils.prune as prune
 import torch.nn.functional as F
 import torch.optim as optim
 
 from block_diagonal_gcn.utils import load_data, accuracy, plot_confusion, plot_tsne
 from block_diagonal_gcn.models import GCN_B_D
+from block_diagonal_gcn.weight_pruning import ThresholdPruning
 
 # Training settings
 parser = argparse.ArgumentParser()
@@ -28,6 +30,8 @@ parser.add_argument('--weight_decay', type=float, default=5e-4,
 #parser.add_argument('--hidden', type=int, default=16,
                     #help='Number of hidden units.')
 parser.add_argument('--dropout', type=float, default=0.5,
+                    help='Dropout rate (1 - keep probability).')
+parser.add_argument('--weight_pruning_threshold', type=float, default=0,
                     help='Dropout rate (1 - keep probability).')
 
 args = parser.parse_args()
@@ -50,6 +54,18 @@ model = GCN_B_D(nfeatures=features.shape[1],
 #for param in model.parameters():
     # Weights for back propagation
     #print(type(param), param.size())
+
+parameters_to_prune = (
+    (model.gc1, 'block_weight'),
+    (model.gc2, 'block_weight'),
+    (model.gc3, 'weight'),
+)
+
+
+prune.global_unstructured(
+    parameters_to_prune,
+    pruning_method=ThresholdPruning, threshold=args.weight_pruning_threshold,
+)
 
 optimizer = optim.Adam(model.parameters(),
                        lr=args.lr, weight_decay=args.weight_decay)
@@ -88,6 +104,40 @@ def train(epoch):
           'loss_val: {:.4f}'.format(loss_val.item()),
           'acc_val: {:.4f}'.format(acc_val.item()),
           'time: {:.4f}s'.format(time.time() - t))
+
+    print(
+        "Sparsity in gc1.weight: {:.2f}%".format(
+            100. * float(torch.sum(model.gc1.block_weight == 0))
+            / float(model.gc1.block_weight.nelement())
+        )
+    )
+    print(
+        "Sparsity in gc2.weight: {:.2f}%".format(
+            100. * float(torch.sum(model.gc2.block_weight == 0))
+            / float(model.gc2.block_weight.nelement())
+        )
+    )
+    print(
+        "Sparsity in gc3.weight: {:.2f}%".format(
+            100. * float(torch.sum(model.gc3.weight == 0))
+            / float(model.gc3.weight.nelement())
+        )
+    )
+
+    print(
+        "Global sparsity: {:.2f}%".format(
+            100. * float(
+                + torch.sum(model.gc1.block_weight == 0)
+                + torch.sum(model.gc2.block_weight == 0)
+                + torch.sum(model.gc3.weight == 0)
+            )
+            / float(
+                + model.gc1.block_weight.nelement()
+                + model.gc2.block_weight.nelement()
+                + model.gc3.weight.nelement()
+            )
+        )
+    )
 
 
 def test():
