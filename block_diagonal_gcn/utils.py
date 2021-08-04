@@ -7,6 +7,7 @@ from sklearn.metrics import confusion_matrix
 from mlxtend.plotting import plot_confusion_matrix
 
 from sklearn.manifold import TSNE
+from block_diagonal_gcn.dataloader import load_citation_data
 from block_diagonal_gcn.partition import clique_partition, general_partition 
 
 
@@ -116,6 +117,22 @@ def load_data(path="../data/test/", dataset="test"):
 
     return adj, features, labels, partitions, idx_train, idx_val, idx_test
 
+
+def process_data(data_path, dataset_name):
+    if dataset_name == 'cora' or dataset_name == 'citeseer' or dataset_name == 'pubmed':
+        features, labels, dir_adj, idx_train, idx_val, idx_test = load_citation_data(dataset_name, data_path)
+
+        adj = dir_adj + dir_adj.T.multiply(dir_adj.T > dir_adj) - dir_adj.multiply(dir_adj.T > dir_adj)
+        labels = np.argmax(labels, axis=1)
+
+        features = torch.from_numpy(features)
+        labels = torch.LongTensor(labels)
+        adj = sparse_mx_to_torch_sparse_tensor(adj)
+
+        idx_train = torch.LongTensor(idx_train)
+        idx_val = torch.LongTensor(idx_val)
+        idx_test = torch.LongTensor(idx_test)
+        return adj, features, labels, idx_train, idx_val, idx_test
 
 def normalize_adj(adj):
     """Symmetrically normalize adjacency matrix."""
