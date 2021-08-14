@@ -1,0 +1,7 @@
+numpy
+torch
+scipy
+matplotlib
+sklearn
+mlxtend
+networkx
